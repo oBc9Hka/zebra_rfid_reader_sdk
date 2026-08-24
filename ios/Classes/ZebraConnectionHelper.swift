@@ -1,3 +1,4 @@
+#if !targetEnvironment(simulator)
 import UIKit
 import Flutter
 
@@ -216,3 +217,4 @@ enum BeeperVolume: Int {
     case medium = 2
     case high = 3
 }
+#endif

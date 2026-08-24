@@ -1,3 +1,4 @@
+#if !targetEnvironment(simulator)
 import UIKit
 
 class SdkApiDelegate: NSObject, srfidISdkApiDelegate {
@@ -233,3 +234,4 @@ class SdkApiDelegate: NSObject, srfidISdkApiDelegate {
         }
     }
 }
+#endif

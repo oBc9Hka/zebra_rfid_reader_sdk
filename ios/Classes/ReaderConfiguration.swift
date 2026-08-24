@@ -1,3 +1,4 @@
+#if !targetEnvironment(simulator)
 class ReaderConfiguration {
     var api: srfidISdkApi
     var connectedReaderID: Int32?
@@ -167,3 +168,4 @@ class ReaderConfiguration {
         
     }
 }
+#endif

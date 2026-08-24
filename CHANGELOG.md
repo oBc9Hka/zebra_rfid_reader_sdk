@@ -1,3 +1,7 @@
+## 0.0.3
+
+- Fix iOS Simulator builds on Apple Silicon: do not vendor the device-only Zebra static library for `iphonesimulator`, so Xcode can still match simulator destinations.
+
 ## 0.0.2
 
 #### Upgrade notes:
