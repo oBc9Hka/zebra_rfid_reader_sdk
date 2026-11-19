@@ -64,10 +64,10 @@ The manifest file will look like this:
     </application>
 </manifest>
 ```
-### Be Sure minSdkVersion 19 or Higher
+### Be Sure minSdkVersion 29 or Higher
 ```dart
 defaultConfig {
-   minSdkVersion 19
+   minSdkVersion 29
 }    
 ```
 ## IOS Setup 🔧 

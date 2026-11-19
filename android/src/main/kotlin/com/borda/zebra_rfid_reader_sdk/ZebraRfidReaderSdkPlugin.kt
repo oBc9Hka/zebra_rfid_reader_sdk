@@ -1,5 +1,6 @@
 package com.borda.zebra_rfid_reader_sdk
 
+import android.content.Context
 import android.util.Log
 import com.borda.zebra_rfid_reader_sdk.utils.BordaReaderDevice
 import com.borda.zebra_rfid_reader_sdk.utils.ConnectionStatus
@@ -20,6 +21,8 @@ class ZebraRfidReaderSdkPlugin : FlutterPlugin, MethodCallHandler {
     /// when the Flutter Engine is detached from the Activity
     private lateinit var methodChannel: MethodChannel
     private lateinit var connectionHelper: ZebraConnectionHelper
+    private lateinit var applicationContext: Context
+    private var initError: Exception? = null
 
     private lateinit var tagHandlerEvent: EventChannel
     private lateinit var tagFindingEvent: EventChannel
@@ -47,11 +50,36 @@ class ZebraRfidReaderSdkPlugin : FlutterPlugin, MethodCallHandler {
         tagFindingEvent.setStreamHandler(tagFindingEventHandler)
         readTagEvent.setStreamHandler(readTagEventHandler)
         Log.d(LOG_TAG, "onAttachedToEngine called")
-        connectionHelper =
-            ZebraConnectionHelper(flutterPluginBinding.applicationContext, tagDataEventHandler, tagFindingEventHandler, readTagEventHandler)
+        applicationContext = flutterPluginBinding.applicationContext
+        ensureConnectionHelper()
     }
 
-    override fun onMethodCall(call: MethodCall, result: Result) =
+    private fun ensureConnectionHelper(): Boolean {
+        if (::connectionHelper.isInitialized) return true
+        return try {
+            connectionHelper = ZebraConnectionHelper(
+                applicationContext,
+                tagDataEventHandler,
+                tagFindingEventHandler,
+                readTagEventHandler,
+            )
+            true
+        } catch (e: Exception) {
+            Log.e(LOG_TAG, "Failed to create ZebraConnectionHelper", e)
+            initError = e
+            false
+        }
+    }
+
+    override fun onMethodCall(call: MethodCall, result: Result) {
+        if (!ensureConnectionHelper()) {
+            result.error("init_error", initError?.toString(), Log.getStackTraceString(initError))
+            return
+        }
+        handleMethodCall(call, result)
+    }
+
+    private fun handleMethodCall(call: MethodCall, result: Result) =
         when (call.method) {
             "connect" -> {
                 Log.d(LOG_TAG, "connect called")
@@ -115,6 +143,7 @@ class ZebraRfidReaderSdkPlugin : FlutterPlugin, MethodCallHandler {
         methodChannel.setMethodCallHandler(null)
         tagHandlerEvent.setStreamHandler(null)
         tagFindingEvent.setStreamHandler(null)
-        connectionHelper.dispose()
+        readTagEvent.setStreamHandler(null)
+        if (::connectionHelper.isInitialized) connectionHelper.dispose()
     }
 }
