@@ -43,6 +43,7 @@ android {
 
     defaultConfig {
         minSdkVersion 29
+        consumerProguardFiles 'consumer-rules.pro'
     }
    // ndkVersion '25.1.8937393'
     buildToolsVersion '30.0.3'
