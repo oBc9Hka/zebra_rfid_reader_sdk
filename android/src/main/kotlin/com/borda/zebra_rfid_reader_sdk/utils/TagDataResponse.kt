@@ -10,9 +10,13 @@ class TagDataResponse {
     @SerializedName("lastSeenTime")
     private var lastSeenTime: String = ""
 
-    constructor(tagId: String, lastSeenTime: String) {
+    @SerializedName("sdkLog")
+    private var sdkLog: String? = null
+
+    constructor(tagId: String, lastSeenTime: String, sdkLog: String? = null) {
         this.tagId = tagId
         this.lastSeenTime = lastSeenTime
+        this.sdkLog = sdkLog
     }
 
     fun toJson(): String {

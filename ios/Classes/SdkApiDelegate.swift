@@ -74,8 +74,22 @@ class SdkApiDelegate: NSObject, srfidISdkApiDelegate {
         // Print tag data
         print("Tag ID: \(tagId), Timestamp: \(timestamp)")
         
+        var sdkLog: String? = nil
+        if TagLogging.enabled {
+            let bank = tagData.getMemoryBank()
+            let bankData = tagData.getMemoryBankData() ?? ""
+            let tid = bank == SRFID_MEMORYBANK_TID ? bankData : ""
+            let user = bank == SRFID_MEMORYBANK_USER ? bankData : ""
+            sdkLog = "tagID=\(tagId), peakRSSI=\(tagData.getPeakRSSI()), tagSeenCount=\(tagData.getTagSeenCount()), " +
+                "antennaID=, isContainsLocationInfo=\(tagData.getProximity() > 0), tid=\(tid), user=\(user), " +
+                "pc=\(tagData.getPC() ?? ""), channelIndex=\(tagData.getChannelIndex()), " +
+                "phaseInfo=\(tagData.getPhaseInfo()), memoryBank=\(bank.rawValue), memoryBankData=\(bankData), " +
+                "firstSeenTime=\(tagData.getFirstSeenTime()), lastSeenTime=\(tagData.getLastSeenTime()), " +
+                "proximity=\(tagData.getProximity())"
+        }
+        
         // Create TagDataResponse object
-        let tagDataResponse = TagDataResponse(tagId: tagId, lastSeenTime: timestamp)
+        let tagDataResponse = TagDataResponse(tagId: tagId, lastSeenTime: timestamp, sdkLog: sdkLog)
         
         // Convert TagDataResponse to JSON and send to Flutter
         if let jsonString = tagDataResponse.toJson() {

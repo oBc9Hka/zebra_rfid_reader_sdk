@@ -35,9 +35,18 @@ class RfidEventHandler(
                     TagLocationingResponse.setDistancePercent(myTags[index].LocationInfo.relativeDistance.toInt())
                     tagFindHandler.sendEvent(TagLocationingResponse.toJson())
                 }else{
+                    val sdkTag = myTags[index]
+                    val sdkLog = if (TagLogging.enabled) {
+                        "tagID=${sdkTag.tagID}, peakRSSI=${sdkTag.peakRSSI}, tagSeenCount=${sdkTag.tagSeenCount}, " +
+                            "antennaID=${sdkTag.antennaID}, isContainsLocationInfo=${sdkTag.isContainsLocationInfo}, " +
+                            "tid=${sdkTag.getTID()}, user=${sdkTag.getUser()}"
+                    } else {
+                        null
+                    }
                     val tagData = TagDataResponse(
-                        myTags[index].tagID,
-                        Date(System.currentTimeMillis()).toString()
+                        sdkTag.tagID,
+                        Date(System.currentTimeMillis()).toString(),
+                        sdkLog,
                     )
                     readTagEvent.sendEvent(tagData.toJson())
                 }
