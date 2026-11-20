@@ -1,5 +1,6 @@
 #if !targetEnvironment(simulator)
 import UIKit
+import ZebraRfidSdkFramework
 
 class SdkApiDelegate: NSObject, srfidISdkApiDelegate {
     
@@ -121,7 +122,7 @@ class SdkApiDelegate: NSObject, srfidISdkApiDelegate {
     
     func asciiConnection(readerID: Int32){
         print("asciiConnection")
-        let status = api.srfidEstablishAsciiConnection(readerID, aPassword: "")
+        let status = api.srfidEstablishAsciiConnection(readerID)
         switch status {
         case SRFID_RESULT_SUCCESS:
             print("srfidEstablishAsciiConnection success")
@@ -233,6 +234,12 @@ class SdkApiDelegate: NSObject, srfidISdkApiDelegate {
         }
     }
     
+    func srfidEventIOTSatusNotity(_ readerID: Int32, aIOTStatusEvent iotStatusEvent: srfidIOTStatusEvent!) {
+    }
+
+    func srfidEventConnectedInterfaceNotity(_ readerID: Int32, aConnectedInterfaceEvent connectedInterfaceEvent: sfidConnectedInterfaceEvent!) {
+    }
+
     func requestBatteryStatus(readerID: Int32) {
         DispatchQueue.global(qos: .userInitiated).async {
             print("requestBatteryStatus")

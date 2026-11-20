@@ -1,6 +1,7 @@
 #if !targetEnvironment(simulator)
 import UIKit
 import Flutter
+import ZebraRfidSdkFramework
 
 class ZebraConnectionHelper: NSObject {
     let api: srfidISdkApi

@@ -1,4 +1,6 @@
 #if !targetEnvironment(simulator)
+import ZebraRfidSdkFramework
+
 class ReaderConfiguration {
     var api: srfidISdkApi
     var connectedReaderID: Int32?
