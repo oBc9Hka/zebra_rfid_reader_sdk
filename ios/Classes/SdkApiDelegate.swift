@@ -156,12 +156,34 @@ class SdkApiDelegate: NSObject, srfidISdkApiDelegate {
             
             if triggerMode == .inventoryPerform {
                 // Start inventory reading
-                
-                let result = self.api.srfidStartInventory(readerID, aMemoryBank: SRFID_MEMORYBANK_EPC, aReportConfig: reportConfig, aAccessConfig: accessConfig, aStatusMessage: &statusMessage)
-                
-                
-                print("Start Inventory result: \(result.rawValue), status message: \(statusMessage ?? "No status message")")
-                
+                var antennaConfig: srfidAntennaConfiguration? = srfidAntennaConfiguration()
+                let getConfigResult = self.api.srfidGetAntennaConfiguration(
+                    readerID,
+                    aAntennaConfiguration: &antennaConfig,
+                    aStatusMessage: &statusMessage
+                )
+                guard getConfigResult == SRFID_RESULT_SUCCESS, let antennaConfig else {
+                    print(
+                        "Failed to get antenna configuration for inventory: \(statusMessage ?? "No status message")"
+                    )
+                    return
+                }
+
+                accessConfig.setPower(antennaConfig.getPower())
+                accessConfig.setDoSelect(false)
+
+                let result = self.api.srfidStartInventory(
+                    readerID,
+                    aMemoryBank: SRFID_MEMORYBANK_EPC,
+                    aReportConfig: reportConfig,
+                    aAccessConfig: accessConfig,
+                    aStatusMessage: &statusMessage
+                )
+
+                print(
+                    "Start Inventory result: \(result.rawValue), status message: \(statusMessage ?? "No status message")"
+                )
+
             } else if triggerMode == .tagLocationingPerform {
                 let tagLocationing = TagLocationingResponse.shared.getTag()
                 let result = self.api.srfidStartTagLocationing(readerID, aTagEpcId: tagLocationing, aStatusMessage: &statusMessage)
