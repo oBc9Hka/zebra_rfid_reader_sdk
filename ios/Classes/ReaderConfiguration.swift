@@ -1,4 +1,6 @@
 #if !targetEnvironment(simulator)
+import ZebraRfidSdkFramework
+
 class ReaderConfiguration {
     var api: srfidISdkApi
     var connectedReaderID: Int32?
@@ -26,11 +28,9 @@ class ReaderConfiguration {
         }
         
         
-        // Update the configuration
+        // Update power only; keep link profile and tari from the reader
         antennaConfig!.setPower(Int16(transmitPowerIndex))
-        antennaConfig!.setLinkProfileIdx(0) // Example index, adjust as necessary
-        antennaConfig!.setTari(0) // Example Tari, adjust as necessary
-        
+
         // Set the updated configuration back to the reader
         let result = api.srfidSetAntennaConfiguration(connectedReaderID!, aAntennaConfiguration: antennaConfig!, aStatusMessage: &statusMessage)
         if result == SRFID_RESULT_SUCCESS {

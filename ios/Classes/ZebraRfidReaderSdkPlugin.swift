@@ -1,5 +1,8 @@
 import Flutter
 import UIKit
+#if !targetEnvironment(simulator)
+import ZebraRfidSdkFramework
+#endif
 
 public class ZebraRfidReaderSdkPlugin: NSObject, FlutterPlugin {
   var tagHandlerEvent: TagDataEventHandler!

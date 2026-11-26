@@ -1,5 +1,6 @@
 #if !targetEnvironment(simulator)
 import UIKit
+import ZebraRfidSdkFramework
 
 class SdkApiDelegate: NSObject, srfidISdkApiDelegate {
     
@@ -121,7 +122,7 @@ class SdkApiDelegate: NSObject, srfidISdkApiDelegate {
     
     func asciiConnection(readerID: Int32){
         print("asciiConnection")
-        let status = api.srfidEstablishAsciiConnection(readerID, aPassword: "")
+        let status = api.srfidEstablishAsciiConnection(readerID)
         switch status {
         case SRFID_RESULT_SUCCESS:
             print("srfidEstablishAsciiConnection success")
@@ -155,12 +156,34 @@ class SdkApiDelegate: NSObject, srfidISdkApiDelegate {
             
             if triggerMode == .inventoryPerform {
                 // Start inventory reading
-                
-                let result = self.api.srfidStartInventory(readerID, aMemoryBank: SRFID_MEMORYBANK_EPC, aReportConfig: reportConfig, aAccessConfig: accessConfig, aStatusMessage: &statusMessage)
-                
-                
-                print("Start Inventory result: \(result.rawValue), status message: \(statusMessage ?? "No status message")")
-                
+                var antennaConfig: srfidAntennaConfiguration? = srfidAntennaConfiguration()
+                let getConfigResult = self.api.srfidGetAntennaConfiguration(
+                    readerID,
+                    aAntennaConfiguration: &antennaConfig,
+                    aStatusMessage: &statusMessage
+                )
+                guard getConfigResult == SRFID_RESULT_SUCCESS, let antennaConfig else {
+                    print(
+                        "Failed to get antenna configuration for inventory: \(statusMessage ?? "No status message")"
+                    )
+                    return
+                }
+
+                accessConfig.setPower(antennaConfig.getPower())
+                accessConfig.setDoSelect(false)
+
+                let result = self.api.srfidStartInventory(
+                    readerID,
+                    aMemoryBank: SRFID_MEMORYBANK_EPC,
+                    aReportConfig: reportConfig,
+                    aAccessConfig: accessConfig,
+                    aStatusMessage: &statusMessage
+                )
+
+                print(
+                    "Start Inventory result: \(result.rawValue), status message: \(statusMessage ?? "No status message")"
+                )
+
             } else if triggerMode == .tagLocationingPerform {
                 let tagLocationing = TagLocationingResponse.shared.getTag()
                 let result = self.api.srfidStartTagLocationing(readerID, aTagEpcId: tagLocationing, aStatusMessage: &statusMessage)
@@ -233,6 +256,12 @@ class SdkApiDelegate: NSObject, srfidISdkApiDelegate {
         }
     }
     
+    func srfidEventIOTSatusNotity(_ readerID: Int32, aIOTStatusEvent iotStatusEvent: srfidIOTStatusEvent!) {
+    }
+
+    func srfidEventConnectedInterfaceNotity(_ readerID: Int32, aConnectedInterfaceEvent connectedInterfaceEvent: sfidConnectedInterfaceEvent!) {
+    }
+
     func requestBatteryStatus(readerID: Int32) {
         DispatchQueue.global(qos: .userInitiated).async {
             print("requestBatteryStatus")
