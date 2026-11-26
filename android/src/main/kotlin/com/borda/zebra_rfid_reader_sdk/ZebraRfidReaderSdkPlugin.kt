@@ -5,7 +5,6 @@ import android.util.Log
 import com.borda.zebra_rfid_reader_sdk.utils.BordaReaderDevice
 import com.borda.zebra_rfid_reader_sdk.utils.ConnectionStatus
 import com.borda.zebra_rfid_reader_sdk.utils.LOG_TAG
-import com.borda.zebra_rfid_reader_sdk.utils.TagLogging
 import com.google.gson.Gson
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.EventChannel
@@ -73,11 +72,6 @@ class ZebraRfidReaderSdkPlugin : FlutterPlugin, MethodCallHandler {
     }
 
     override fun onMethodCall(call: MethodCall, result: Result) {
-        if (call.method == "setTagLogging") {
-            TagLogging.enabled = call.argument<Boolean>("enabled") == true
-            result.success(null)
-            return
-        }
         if (!ensureConnectionHelper()) {
             result.error("init_error", initError?.toString(), Log.getStackTraceString(initError))
             return

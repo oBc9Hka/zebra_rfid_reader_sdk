@@ -84,9 +84,4 @@ class MethodChannelZebraRfidReaderSdk extends ZebraRfidReaderSdkPlatform {
   Stream<dynamic> get readTags {
     return _readTagsEventChannel.receiveBroadcastStream();
   }
-
-  @override
-  Future<void> setTagLogging(bool enabled) async {
-    await _methodChannel.invokeMethod<void>('setTagLogging', {'enabled': enabled});
-  }
 }

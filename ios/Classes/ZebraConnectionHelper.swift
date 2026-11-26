@@ -90,16 +90,16 @@ class ZebraConnectionHelper: NSObject {
     }
     
     func setAntennaPower(transmitPowerIndex: Int){
-        let readerConfigurator = ReaderConfiguration(api: self.api, connectedReaderID: connectedReaderID, tagHandlerEvent: self.readTagEvent)
+        let readerConfigurator = ReaderConfiguration(api: self.api, connectedReaderID: connectedReaderID, tagHandlerEvent: self.tagHandlerEvent)
         readerConfigurator.configureAntenna(transmitPowerIndex: transmitPowerIndex)
     }
     func setDynamicPower(isEnable: Bool){
-        let readerConfigurator = ReaderConfiguration(api: self.api, connectedReaderID: connectedReaderID, tagHandlerEvent: self.readTagEvent)
+        let readerConfigurator = ReaderConfiguration(api: self.api, connectedReaderID: connectedReaderID, tagHandlerEvent: self.tagHandlerEvent)
         readerConfigurator.configureDPO(isDynamicPowerEnable: isEnable)
     }
     
     func setBeeperVolumeConfig(level: Int){
-        let readerConfigurator = ReaderConfiguration(api: self.api, connectedReaderID: connectedReaderID, tagHandlerEvent: self.readTagEvent)
+        let readerConfigurator = ReaderConfiguration(api: self.api, connectedReaderID: connectedReaderID, tagHandlerEvent: self.tagHandlerEvent)
         readerConfigurator.setBeeperVolumeConfig(level: level)
     }
     
@@ -133,6 +133,14 @@ class ZebraConnectionHelper: NSObject {
         default:
             print("Connection error")
             print("trying to disconnect for any devices")
+            ReaderResponse.shared.setAsConnectionError()
+            tagHandlerEvent.sendEvent(json: ReaderResponse.shared.toJson())
+            tagHandlerEvent.sendEvent(
+                json: RfidEventJson.connectError(
+                    code: "\(status.rawValue)",
+                    message: "srfidEstablishCommunicationSession failed"
+                )
+            )
             disconnect(readerID: Int32(readerID))
             
         }

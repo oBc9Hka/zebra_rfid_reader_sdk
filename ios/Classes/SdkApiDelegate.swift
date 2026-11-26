@@ -75,19 +75,16 @@ class SdkApiDelegate: NSObject, srfidISdkApiDelegate {
         // Print tag data
         print("Tag ID: \(tagId), Timestamp: \(timestamp)")
         
-        var sdkLog: String? = nil
-        if TagLogging.enabled {
-            let bank = tagData.getMemoryBank()
-            let bankData = tagData.getMemoryBankData() ?? ""
-            let tid = bank == SRFID_MEMORYBANK_TID ? bankData : ""
-            let user = bank == SRFID_MEMORYBANK_USER ? bankData : ""
-            sdkLog = "tagID=\(tagId), peakRSSI=\(tagData.getPeakRSSI()), tagSeenCount=\(tagData.getTagSeenCount()), " +
-                "antennaID=, isContainsLocationInfo=\(tagData.getProximity() > 0), tid=\(tid), user=\(user), " +
-                "pc=\(tagData.getPC() ?? ""), channelIndex=\(tagData.getChannelIndex()), " +
-                "phaseInfo=\(tagData.getPhaseInfo()), memoryBank=\(bank.rawValue), memoryBankData=\(bankData), " +
-                "firstSeenTime=\(tagData.getFirstSeenTime()), lastSeenTime=\(tagData.getLastSeenTime()), " +
-                "proximity=\(tagData.getProximity())"
-        }
+        let bank = tagData.getMemoryBank()
+        let bankData = tagData.getMemoryBankData() ?? ""
+        let tid = bank == SRFID_MEMORYBANK_TID ? bankData : ""
+        let user = bank == SRFID_MEMORYBANK_USER ? bankData : ""
+        let sdkLog = "tagID=\(tagId), peakRSSI=\(tagData.getPeakRSSI()), tagSeenCount=\(tagData.getTagSeenCount()), " +
+            "antennaID=, isContainsLocationInfo=\(tagData.getProximity() > 0), tid=\(tid), user=\(user), " +
+            "pc=\(tagData.getPC() ?? ""), channelIndex=\(tagData.getChannelIndex()), " +
+            "phaseInfo=\(tagData.getPhaseInfo()), memoryBank=\(bank.rawValue), memoryBankData=\(bankData), " +
+            "firstSeenTime=\(tagData.getFirstSeenTime()), lastSeenTime=\(tagData.getLastSeenTime()), " +
+            "proximity=\(tagData.getProximity())"
         
         // Create TagDataResponse object
         let tagDataResponse = TagDataResponse(tagId: tagId, lastSeenTime: timestamp, sdkLog: sdkLog)
@@ -100,7 +97,13 @@ class SdkApiDelegate: NSObject, srfidISdkApiDelegate {
     
     
     func srfidEventStatusNotify(_ readerID: Int32, aEvent event: SRFID_EVENT_STATUS, aNotification notificationData: Any!) {
-        print("srfidEventStatusNotify")
+        print("srfidEventStatusNotify event=\(event.rawValue)")
+        // Prefer typed summary when the SDK provides it; otherwise ignore noisy status events.
+        if let summary = notificationData as? srfidOperEndSummaryEvent {
+            tagHandlerEvent.sendEvent(
+                json: RfidEventJson.summary(sdkCount: Int(summary.getTotalTags()))
+            )
+        }
     }
     
     func srfidEventProximityNotify(_ readerID: Int32, aProximityPercent proximityPercent: Int32) {
@@ -112,10 +115,10 @@ class SdkApiDelegate: NSObject, srfidISdkApiDelegate {
     func srfidEventTriggerNotify(_ readerID: Int32, aTriggerEvent triggerEvent: SRFID_TRIGGEREVENT) {
         print("srfidEventTriggerNotify")
         if triggerEvent == SRFID_TRIGGEREVENT_PRESSED {
-            // Start inventory when the trigger is pressed
+            tagHandlerEvent.sendEvent(json: RfidEventJson.trigger(action: "pressed"))
             startInventory(readerID: readerID)
         } else if triggerEvent == SRFID_TRIGGEREVENT_RELEASED {
-            // Stop inventory when the trigger is released
+            tagHandlerEvent.sendEvent(json: RfidEventJson.trigger(action: "released"))
             stopInventory(readerID: readerID)
         }
     }
@@ -129,6 +132,13 @@ class SdkApiDelegate: NSObject, srfidISdkApiDelegate {
             
         default:
             print("srfidEstablishAsciiConnection error")
+            tagHandlerEvent.sendEvent(
+                json: RfidEventJson.connectError(
+                    code: "\(status.rawValue)",
+                    message: "srfidEstablishAsciiConnection failed",
+                    action: "ascii"
+                )
+            )
         }
     }
     
@@ -166,6 +176,13 @@ class SdkApiDelegate: NSObject, srfidISdkApiDelegate {
                     print(
                         "Failed to get antenna configuration for inventory: \(statusMessage ?? "No status message")"
                     )
+                    self.tagHandlerEvent.sendEvent(
+                        json: RfidEventJson.inventory(
+                            action: "start",
+                            code: "\(getConfigResult.rawValue)",
+                            message: statusMessage as String? ?? "Failed to get antenna configuration"
+                        )
+                    )
                     return
                 }
 
@@ -183,6 +200,15 @@ class SdkApiDelegate: NSObject, srfidISdkApiDelegate {
                 print(
                     "Start Inventory result: \(result.rawValue), status message: \(statusMessage ?? "No status message")"
                 )
+                if result != SRFID_RESULT_SUCCESS {
+                    self.tagHandlerEvent.sendEvent(
+                        json: RfidEventJson.inventory(
+                            action: "start",
+                            code: "\(result.rawValue)",
+                            message: statusMessage as String?
+                        )
+                    )
+                }
 
             } else if triggerMode == .tagLocationingPerform {
                 let tagLocationing = TagLocationingResponse.shared.getTag()
@@ -190,6 +216,15 @@ class SdkApiDelegate: NSObject, srfidISdkApiDelegate {
                 
                 
                 print("Start Tag Locationing result: \(result.rawValue), status message: \(statusMessage ?? "No status message")")
+                if result != SRFID_RESULT_SUCCESS {
+                    self.tagHandlerEvent.sendEvent(
+                        json: RfidEventJson.inventory(
+                            action: "start",
+                            code: "\(result.rawValue)",
+                            message: statusMessage as String?
+                        )
+                    )
+                }
                 
             }
             
@@ -210,6 +245,15 @@ class SdkApiDelegate: NSObject, srfidISdkApiDelegate {
                 
                 
                 print("Stop Inventory result: \(result.rawValue), status message: \(statusMessage ?? "No status message")")
+                if result != SRFID_RESULT_SUCCESS {
+                    self.tagHandlerEvent.sendEvent(
+                        json: RfidEventJson.inventory(
+                            action: "stop",
+                            code: "\(result.rawValue)",
+                            message: statusMessage as String?
+                        )
+                    )
+                }
                 
             } else if triggerMode == .tagLocationingPerform {
                 // Stop tag locationing
@@ -217,6 +261,15 @@ class SdkApiDelegate: NSObject, srfidISdkApiDelegate {
                 
                 
                 print("Stop Tag Locationing result: \(result.rawValue), status message: \(statusMessage ?? "No status message")")
+                if result != SRFID_RESULT_SUCCESS {
+                    self.tagHandlerEvent.sendEvent(
+                        json: RfidEventJson.inventory(
+                            action: "stop",
+                            code: "\(result.rawValue)",
+                            message: statusMessage as String?
+                        )
+                    )
+                }
                 
             }
         }

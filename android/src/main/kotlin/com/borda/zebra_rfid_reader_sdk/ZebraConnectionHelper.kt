@@ -100,9 +100,14 @@ class ZebraConnectionHelper(
                 Log.d(LOG_TAG, "CONNECTION FAILED 1 -> InvalidUsageException")
                 ReaderResponse.setAsConnectionError()
                 tagHandlerEvent.sendEvent(ReaderResponse.toJson())
+                tagHandlerEvent.sendEvent(
+                    RfidEventJson.connectError("InvalidUsageException", e.vendorMessage)
+                )
 
             } catch (e: OperationFailureException) {
+                var regionAuto: String? = null
                 if (e.results == RFIDResults.RFID_READER_REGION_NOT_CONFIGURED) {
+                    regionAuto = "TUR"
                     setDefaultRegion("TUR", name, readerConfig)
                 }
 
@@ -110,6 +115,13 @@ class ZebraConnectionHelper(
                 Log.d(LOG_TAG, "CONNECTION FAILED 2 ->  ${e.results}")
                 ReaderResponse.setAsConnectionError()
                 tagHandlerEvent.sendEvent(ReaderResponse.toJson())
+                tagHandlerEvent.sendEvent(
+                    RfidEventJson.connectError(
+                        e.results?.toString(),
+                        e.vendorMessage,
+                        regionAuto = regionAuto,
+                    )
+                )
 
             }
         }
@@ -257,9 +269,15 @@ class ZebraConnectionHelper(
             } catch (e: InvalidUsageException) {
                 Log.d(LOG_TAG, "InvalidUsageException -> configureReader")
                 e.printStackTrace()
+                tagHandlerEvent.sendEvent(
+                    RfidEventJson.config("configure", "InvalidUsageException", e.vendorMessage)
+                )
             } catch (e: OperationFailureException) {
                 Log.d(LOG_TAG, "OperationFailureException -> configureReader")
                 e.printStackTrace()
+                tagHandlerEvent.sendEvent(
+                    RfidEventJson.config("configure", e.results?.toString(), e.vendorMessage)
+                )
             }
         }
     }
@@ -343,12 +361,24 @@ class ZebraConnectionHelper(
      * @param transmitPowerIndex Transmit power index.
      */
     fun setAntennaConfig(transmitPowerIndex: Int) {
-        val antennaRfConfig = reader!!.Config.Antennas.getAntennaRfConfig(1)
-        antennaRfConfig.setrfModeTableIndex(0)
-        antennaRfConfig.tari = 0
-        antennaRfConfig.transmitPowerIndex = transmitPowerIndex
-        reader!!.Config.Antennas.setAntennaRfConfig(1, antennaRfConfig)
-        setAntennaRange()
+        try {
+            val antennaRfConfig = reader!!.Config.Antennas.getAntennaRfConfig(1)
+            antennaRfConfig.setrfModeTableIndex(0)
+            antennaRfConfig.tari = 0
+            antennaRfConfig.transmitPowerIndex = transmitPowerIndex
+            reader!!.Config.Antennas.setAntennaRfConfig(1, antennaRfConfig)
+            setAntennaRange()
+        } catch (e: InvalidUsageException) {
+            e.printStackTrace()
+            tagHandlerEvent.sendEvent(
+                RfidEventJson.config("antenna", "InvalidUsageException", e.vendorMessage)
+            )
+        } catch (e: OperationFailureException) {
+            e.printStackTrace()
+            tagHandlerEvent.sendEvent(
+                RfidEventJson.config("antenna", e.results?.toString(), e.vendorMessage)
+            )
+        }
     }
 
     /**
@@ -374,8 +404,20 @@ class ZebraConnectionHelper(
      * @param setEnable Enable dynamic power optimization.
      */
     fun setDynamicPower(setEnable: Boolean) {
-        reader!!.Config.dpoState =
-            if (setEnable) DYNAMIC_POWER_OPTIMIZATION.ENABLE else DYNAMIC_POWER_OPTIMIZATION.DISABLE
+        try {
+            reader!!.Config.dpoState =
+                if (setEnable) DYNAMIC_POWER_OPTIMIZATION.ENABLE else DYNAMIC_POWER_OPTIMIZATION.DISABLE
+        } catch (e: InvalidUsageException) {
+            e.printStackTrace()
+            tagHandlerEvent.sendEvent(
+                RfidEventJson.config("dpo", "InvalidUsageException", e.vendorMessage)
+            )
+        } catch (e: OperationFailureException) {
+            e.printStackTrace()
+            tagHandlerEvent.sendEvent(
+                RfidEventJson.config("dpo", e.results?.toString(), e.vendorMessage)
+            )
+        }
     }
 
     /**
@@ -391,7 +433,19 @@ class ZebraConnectionHelper(
             3 -> BEEPER_VOLUME.HIGH_BEEP
             else -> return
         }
-        reader!!.Config.beeperVolume = config
+        try {
+            reader!!.Config.beeperVolume = config
+        } catch (e: InvalidUsageException) {
+            e.printStackTrace()
+            tagHandlerEvent.sendEvent(
+                RfidEventJson.config("beeper", "InvalidUsageException", e.vendorMessage)
+            )
+        } catch (e: OperationFailureException) {
+            e.printStackTrace()
+            tagHandlerEvent.sendEvent(
+                RfidEventJson.config("beeper", e.results?.toString(), e.vendorMessage)
+            )
+        }
     }
 
     /**

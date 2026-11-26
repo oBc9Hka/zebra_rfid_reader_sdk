@@ -24,6 +24,13 @@ class ReaderConfiguration {
         let getConfigResult = api.srfidGetAntennaConfiguration(connectedReaderID!, aAntennaConfiguration: &antennaConfig, aStatusMessage: &statusMessage)
         if getConfigResult != SRFID_RESULT_SUCCESS || antennaConfig == nil {
             print("Failed to get antenna configuration: \(statusMessage ?? "No status message")")
+            tagHandlerEvent.sendEvent(
+                json: RfidEventJson.config(
+                    field: "antenna",
+                    code: "\(getConfigResult.rawValue)",
+                    message: statusMessage as String? ?? "Failed to get antenna configuration"
+                )
+            )
             return
         }
         
@@ -38,6 +45,13 @@ class ReaderConfiguration {
             print("Antenna configuration Success!")
         } else {
             print("Antenna configuration Failed!: \(statusMessage ?? "No status message")")
+            tagHandlerEvent.sendEvent(
+                json: RfidEventJson.config(
+                    field: "antenna",
+                    code: "\(result.rawValue)",
+                    message: statusMessage as String?
+                )
+            )
         }
         
         // Optionally, handle setting the antenna range
@@ -80,6 +94,13 @@ class ReaderConfiguration {
             print("Singulation configuration Success!")
         } else {
             print("Singulation configuration Failed!: \(statusMessage ?? "No status message")")
+            tagHandlerEvent.sendEvent(
+                json: RfidEventJson.config(
+                    field: "singulation",
+                    code: "\(result.rawValue)",
+                    message: statusMessage as String?
+                )
+            )
         }
     }
     
@@ -97,6 +118,13 @@ class ReaderConfiguration {
             print("DPO configuration Success!")
         } else {
             print("DPO configuration Failed!: \(statusMessage ?? "No status message")")
+            tagHandlerEvent.sendEvent(
+                json: RfidEventJson.config(
+                    field: "dpo",
+                    code: "\(result.rawValue)",
+                    message: statusMessage as String?
+                )
+            )
         }
     }
     
@@ -162,6 +190,13 @@ class ReaderConfiguration {
             print("Beeper configuration Success!")
         } else {
             print("Beeper configuration Failed!: \(statusMessage ?? "No status message")")
+            tagHandlerEvent.sendEvent(
+                json: RfidEventJson.config(
+                    field: "beeper",
+                    code: "\(result.rawValue)",
+                    message: statusMessage as String?
+                )
+            )
         }
         
         
