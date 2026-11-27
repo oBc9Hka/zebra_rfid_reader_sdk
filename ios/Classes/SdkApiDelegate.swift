@@ -48,7 +48,7 @@ class SdkApiDelegate: NSObject, srfidISdkApiDelegate {
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             let readerConfigurator = ReaderConfiguration(api: self.api, connectedReaderID: activeReader.getReaderID(), tagHandlerEvent: self.tagHandlerEvent)
-            readerConfigurator.configureReader(readerConfig: ["antennaPower": 300, "beeperVolume": 3, "isDynamicPowerEnable": true])
+            readerConfigurator.configureReader(readerConfig: ["antennaPower": 300, "beeperVolume": 3, "isDynamicPowerEnable": false])
             // Connection established
             ReaderResponse.shared.setConnectionStatus(.connected)
             ReaderResponse.shared.setName(activeReader.getReaderName())
