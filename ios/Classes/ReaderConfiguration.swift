@@ -24,20 +24,15 @@ class ReaderConfiguration {
         let getConfigResult = api.srfidGetAntennaConfiguration(connectedReaderID!, aAntennaConfiguration: &antennaConfig, aStatusMessage: &statusMessage)
         if getConfigResult != SRFID_RESULT_SUCCESS || antennaConfig == nil {
             print("Failed to get antenna configuration: \(statusMessage ?? "No status message")")
-            tagHandlerEvent.sendEvent(
-                json: RfidEventJson.config(
-                    field: "antenna",
-                    code: "\(getConfigResult.rawValue)",
-                    message: statusMessage as String? ?? "Failed to get antenna configuration"
-                )
-            )
             return
         }
         
         
-        // Update power only; keep link profile and tari from the reader
+        // Update the configuration
         antennaConfig!.setPower(Int16(transmitPowerIndex))
-
+        antennaConfig!.setLinkProfileIdx(0) // Example index, adjust as necessary
+        antennaConfig!.setTari(0) // Example Tari, adjust as necessary
+        
         // Set the updated configuration back to the reader
         let result = api.srfidSetAntennaConfiguration(connectedReaderID!, aAntennaConfiguration: antennaConfig!, aStatusMessage: &statusMessage)
         if result == SRFID_RESULT_SUCCESS {
@@ -45,13 +40,6 @@ class ReaderConfiguration {
             print("Antenna configuration Success!")
         } else {
             print("Antenna configuration Failed!: \(statusMessage ?? "No status message")")
-            tagHandlerEvent.sendEvent(
-                json: RfidEventJson.config(
-                    field: "antenna",
-                    code: "\(result.rawValue)",
-                    message: statusMessage as String?
-                )
-            )
         }
         
         // Optionally, handle setting the antenna range
@@ -94,13 +82,6 @@ class ReaderConfiguration {
             print("Singulation configuration Success!")
         } else {
             print("Singulation configuration Failed!: \(statusMessage ?? "No status message")")
-            tagHandlerEvent.sendEvent(
-                json: RfidEventJson.config(
-                    field: "singulation",
-                    code: "\(result.rawValue)",
-                    message: statusMessage as String?
-                )
-            )
         }
     }
     
@@ -118,13 +99,6 @@ class ReaderConfiguration {
             print("DPO configuration Success!")
         } else {
             print("DPO configuration Failed!: \(statusMessage ?? "No status message")")
-            tagHandlerEvent.sendEvent(
-                json: RfidEventJson.config(
-                    field: "dpo",
-                    code: "\(result.rawValue)",
-                    message: statusMessage as String?
-                )
-            )
         }
     }
     
@@ -190,13 +164,6 @@ class ReaderConfiguration {
             print("Beeper configuration Success!")
         } else {
             print("Beeper configuration Failed!: \(statusMessage ?? "No status message")")
-            tagHandlerEvent.sendEvent(
-                json: RfidEventJson.config(
-                    field: "beeper",
-                    code: "\(result.rawValue)",
-                    message: statusMessage as String?
-                )
-            )
         }
         
         

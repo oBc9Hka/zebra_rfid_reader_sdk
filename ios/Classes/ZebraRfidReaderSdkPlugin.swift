@@ -46,6 +46,12 @@ public class ZebraRfidReaderSdkPlugin: NSObject, FlutterPlugin {
   }
 
   public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+    if call.method == "setTagLogging" {
+      let enabled = (call.arguments as? [String: Any])?["enabled"] as? Bool ?? false
+      TagLogging.enabled = enabled
+      result(nil)
+      return
+    }
 #if targetEnvironment(simulator)
     handleSimulator(call, result: result)
 #else

@@ -3,7 +3,9 @@ package com.borda.zebra_rfid_reader_sdk
 import android.util.Log
 import com.borda.zebra_rfid_reader_sdk.utils.*
 import com.zebra.rfid.api3.*
+import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Locale
 
 /**
  * Handles RFID events such as tag reads, status changes, and disconnections.
@@ -32,12 +34,15 @@ class RfidEventHandler(
                 if (myTags[index].isContainsLocationInfo) {
                     TagLocationingResponse.setDistancePercent(myTags[index].LocationInfo.relativeDistance.toInt())
                     tagFindHandler.sendEvent(TagLocationingResponse.toJson())
-                } else {
+                }else{
                     val sdkTag = myTags[index]
-                    val sdkLog =
+                    val sdkLog = if (TagLogging.enabled) {
                         "tagID=${sdkTag.tagID}, peakRSSI=${sdkTag.peakRSSI}, tagSeenCount=${sdkTag.tagSeenCount}, " +
                             "antennaID=${sdkTag.antennaID}, isContainsLocationInfo=${sdkTag.isContainsLocationInfo}, " +
                             "tid=${sdkTag.getTID()}, user=${sdkTag.getUser()}"
+                    } else {
+                        null
+                    }
                     val tagData = TagDataResponse(
                         sdkTag.tagID,
                         Date(System.currentTimeMillis()).toString(),
@@ -92,15 +97,6 @@ class RfidEventHandler(
                 onTriggerReleased()
             }
         }
-
-        if (rfidStatusEvents.StatusEventData.statusEventType === STATUS_EVENT_TYPE.OPERATION_END_SUMMARY_EVENT) {
-            val sdkCount = try {
-                rfidStatusEvents.StatusEventData.OperationEndSummaryData?.totalTags
-            } catch (_: Throwable) {
-                null
-            }
-            tagHandlerEvent.sendEvent(RfidEventJson.summary(sdkCount))
-        }
     }
 
     /**
@@ -108,11 +104,8 @@ class RfidEventHandler(
      */
     @Synchronized
     fun onTriggerPressed() {
-        if (!isReaderConnected()) {
-            tagHandlerEvent.sendEvent(RfidEventJson.trigger("pressed", ignored = "not_connected"))
-            return
-        }
-        tagHandlerEvent.sendEvent(RfidEventJson.trigger("pressed"))
+        // check reader connection
+        if (!isReaderConnected()) return
         try {
             var triggerMode: TriggerMode = BordaHandheldTrigger.getMode()
 
@@ -127,14 +120,8 @@ class RfidEventHandler(
             }
         } catch (e: InvalidUsageException) {
             e.printStackTrace()
-            tagHandlerEvent.sendEvent(
-                RfidEventJson.inventory("start", "InvalidUsageException", e.vendorMessage)
-            )
         } catch (e: OperationFailureException) {
             e.printStackTrace()
-            tagHandlerEvent.sendEvent(
-                RfidEventJson.inventory("start", e.results?.toString(), e.vendorMessage)
-            )
         }
     }
 
@@ -143,11 +130,8 @@ class RfidEventHandler(
      */
     @Synchronized
     fun onTriggerReleased() {
-        if (!isReaderConnected()) {
-            tagHandlerEvent.sendEvent(RfidEventJson.trigger("released", ignored = "not_connected"))
-            return
-        }
-        tagHandlerEvent.sendEvent(RfidEventJson.trigger("released"))
+        // check reader connection
+        if (!isReaderConnected()) return
         try {
             var triggerMode: TriggerMode = BordaHandheldTrigger.getMode()
 
@@ -159,14 +143,8 @@ class RfidEventHandler(
             }
         } catch (e: InvalidUsageException) {
             e.printStackTrace()
-            tagHandlerEvent.sendEvent(
-                RfidEventJson.inventory("stop", "InvalidUsageException", e.vendorMessage)
-            )
         } catch (e: OperationFailureException) {
             e.printStackTrace()
-            tagHandlerEvent.sendEvent(
-                RfidEventJson.inventory("stop", e.results?.toString(), e.vendorMessage)
-            )
         }
     }
 

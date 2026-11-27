@@ -73,4 +73,9 @@ class ZebraRfidReaderSdk {
   Stream<dynamic> get readTags {
     return ZebraRfidReaderSdkPlatform.instance.readTags;
   }
+
+  /// Enables extra TagData field logging on Android. Must complete; native side returns success.
+  Future<void> setTagLogging(bool enabled) {
+    return ZebraRfidReaderSdkPlatform.instance.setTagLogging(enabled);
+  }
 }
